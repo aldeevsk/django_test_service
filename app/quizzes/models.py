@@ -1,53 +1,72 @@
-import os
 from django.db import models
 from django.urls import reverse
 
-# Create your models here.
 
-
-class Quiz(models.Model):
-    title = models.CharField(max_length=255, verbose_name='Заголовок')
-    slug = models.SlugField(max_length=255, unique=True,
-                            db_index=True, verbose_name='URL')
-    content = models.TextField(blank=True, verbose_name='Содержание')
-    photo = models.ImageField(
-        upload_to="photos/%Y/%m/%d/", verbose_name='Изображение')
-    time_create = models.DateTimeField(
-        auto_now_add=True, verbose_name='Дата создания')
-    time_update = models.DateTimeField(
-        auto_now=True, verbose_name='Дата обновления')
-    is_published = models.BooleanField(
-        default=True, verbose_name='Статус публикации')
-    category = models.ForeignKey(
-        'Category', on_delete=models.PROTECT,  verbose_name='Категория')
+class Category(models.Model):
+    title = models.CharField( max_length=100, db_index=True, verbose_name='категория')
+    slug = models.SlugField(max_length=255, unique=True, db_index=True, verbose_name='слаг')
+    description = models.CharField(max_length=255, blank=True, verbose_name='описание')
 
     def __str__(self):
         return self.title
 
     def get_absolute_url(self):
-        return reverse('post', kwargs={'post_slug': self.slug})
+        return reverse('categories', kwargs={'category_slug': self.slug})
 
     class Meta:
-        verbose_name = 'Тесты'
-        verbose_name_plural = 'Тесты'
+        db_table = 'categories'
+        verbose_name = 'категория'
+        verbose_name_plural = 'категории'
+        ordering = ['title']
+
+
+class Quiz(models.Model):
+    title = models.CharField(max_length=255, verbose_name='заголовок')
+    slug = models.SlugField(max_length=255, unique=True, db_index=True, verbose_name='слаг')
+    description = models.TextField(blank=True, verbose_name='описание')
+    time_create = models.DateTimeField( auto_now_add=True, verbose_name='создан')
+    time_update = models.DateTimeField( auto_now=True, verbose_name='обновлен')
+    is_published = models.BooleanField( default=True, verbose_name='статус публикации')
+    category = models.ForeignKey( 'Category', on_delete=models.PROTECT,  verbose_name='категория')
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse('quizzes', kwargs={'quiz_slug': self.slug})
+
+    class Meta:
+        db_table = 'quizzes'
+        verbose_name = 'тест'
+        verbose_name_plural = 'тесты'
         ordering = ['-time_create', 'title']
 
 
-class Category(models.Model):
-    name = models.CharField(
-        max_length=100, db_index=True, verbose_name='Категория')
-    slug = models.SlugField(max_length=255, unique=True,
-                            db_index=True, verbose_name='URL')
-    image = models.ImageField(
-        upload_to="photos/%Y/%m/%d/", verbose_name='Изображение')
+class Question(models.Model):
+    text = models.CharField(max_length=255, verbose_name='текст вопроса')
+    quiz = models.ForeignKey('Quiz', on_delete=models.CASCADE, verbose_name="тест")
+    time_create = models.DateTimeField( auto_now_add=True, verbose_name='создан')
+    time_update = models.DateTimeField( auto_now=True, verbose_name='обновлен')
 
     def __str__(self):
-        return self.name
-
-    def get_absolute_url(self):
-        return reverse('category', kwargs={'cat_slug': self.slug})
+        return self.text
 
     class Meta:
-        verbose_name = 'Категории'
-        verbose_name_plural = 'Категории'
-        ordering = ['name']
+        db_table = 'questions'
+        verbose_name = 'вопрос'
+        verbose_name_plural = 'вопросы'
+        ordering = ['-time_create']
+
+
+class Answer(models.Model):
+    text = models.CharField(max_length=100, verbose_name="ответ")
+    is_correct = models.BooleanField(default=False, verbose_name="Истинность")
+    question = models.ForeignKey('Question', on_delete=models.CASCADE, verbose_name="вопрос")
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        db_table = 'answers'
+        verbose_name = 'ответ'
+        verbose_name_plural = 'ответы'

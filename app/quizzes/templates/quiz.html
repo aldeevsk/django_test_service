@@ -1,0 +1,14 @@
+{% extends "page.html" %}
+{% block main %}
+<div class="qustions">
+    <div class="container">
+        {% for question in questions %}
+        <p class="">{{ question.text }}</p>
+            {% for answer in question.answers %}
+                <input type="radio" name="question-{{question.pk}}" id="question-{{question.pk}}-{{answer.pk}}">
+                <label for="question-{{question.pk}}-{{answer.pk}}">{{ answer }}</label>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock main %}
